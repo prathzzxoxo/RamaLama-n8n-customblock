@@ -1,118 +1,170 @@
-# RamaLama n8n Integration
+# RamaLama Custom n8n Node - Manual Installation Guide
 
-This project provides a custom n8n node for RamaLama AI model operations, running RamaLama in a separate Docker container.
+This repository contains a custom n8n node for RamaLama AI model operations. Follow these instructions to manually add this custom node to your own n8n installation.
 
-## Setup Instructions
+## Prerequisites
 
-### 1. Build and Start RamaLama Container
+- n8n installed and running (version compatible with API version 1)
+- Node.js and npm installed
+- TypeScript compiler (`tsc`) available
+- Basic command line knowledge
+
+## Installation Steps
+
+### Step 1: Download the Node Files
+
+Download or clone this repository to get the custom node files:
 
 ```bash
-# Build the RamaLama container
-docker-compose -f docker-compose.ramalama.yml build
-
-# Start the RamaLama service (make sure your n8n network exists)
-# If you don't have an n8n-network, create it first:
-docker network create n8n-network
-
-# Start RamaLama
-docker-compose -f docker-compose.ramalama.yml up -d
+git clone <your-repo-url>
+cd ramalama
 ```
 
-### 2. Build the Custom n8n Node
+### Step 2: Locate Your n8n Custom Nodes Directory
+
+Find where your n8n installation stores custom nodes. This is typically:
+
+- **Docker installations**: Volume mounted custom nodes directory
+- **npm global installation**: `~/.n8n/custom/`
+- **Local installation**: `./nodes/` in your n8n project root
+
+Create the custom nodes directory if it doesn't exist:
 
 ```bash
-cd custom-nodes
+mkdir -p ~/.n8n/custom
+```
+
+### Step 3: Copy the Node Files
+
+Copy the entire `custom-nodes` directory to your n8n custom nodes location:
+
+```bash
+cp -r custom-nodes ~/.n8n/custom/ramalama-node
+```
+
+### Step 4: Install Dependencies
+
+Navigate to the copied node directory and install dependencies:
+
+```bash
+cd ~/.n8n/custom/ramalama-node
 npm install
+```
+
+### Step 5: Build the TypeScript Files
+
+Compile the TypeScript files to JavaScript:
+
+```bash
 npm run build
 ```
 
-### 3. Install the Custom Node in your n8n Instance
+This will create a `dist` directory with the compiled JavaScript files.
 
-Copy the built node to your n8n custom nodes directory:
+### Step 6: Verify File Structure
 
-```bash
-# If n8n is running in Docker, copy to the mounted volume
-docker cp ./custom-nodes/dist/. your-n8n-container:/home/node/.n8n/custom/node_modules/ramalama-node/
+Your custom node directory should now contain:
 
-# Or if you have a local n8n installation
-cp -r ./custom-nodes/dist/* ~/.n8n/custom/node_modules/ramalama-node/
+```
+~/.n8n/custom/ramalama-node/
+├── package.json
+├── tsconfig.json
+├── index.ts
+├── nodes/
+│   ├── index.ts
+│   └── RamaLama/
+│       ├── RamaLama.node.ts
+│       ├── Functions.ts
+│       ├── icon.svg
+│       ├── icon.png
+│       └── ramalama.jpeg
+├── dist/ (generated after build)
+│   └── [compiled JS files]
+└── node_modules/ (created after npm install)
 ```
 
-### 4. Restart your n8n Container
+### Step 7: Restart n8n
+
+Restart your n8n instance to load the new custom node:
 
 ```bash
+# If running n8n directly
+npx n8n
+
+# If using PM2
+pm2 restart n8n
+
+# If using Docker
 docker restart your-n8n-container
 ```
 
-## Using the RamaLama Node
+## Configuration
 
-The RamaLama node provides the following operations:
+### Node Parameters
 
-### Available Operations
+The RamaLama node supports these operations:
 
-1. **Serve Model**
-   - Starts serving an AI model
-   - Parameters: Model name, Port
-   - Example: `granite-code:3b` on port `11434`
+1. **Serve Model**: Start serving an AI model
+   - Model: Specify the AI model (e.g., `granite-code:3b`, `llama3.2`)
+   - Model Port: Port where the model will be served (default: 11434)
 
-2. **List Containers**
-   - Lists all running AI model containers
-   - No additional parameters required
+2. **List Containers**: List running AI model containers
 
-3. **Benchmark Model**
-   - Benchmarks a specified AI model
-   - Parameters: Model name
-   - Example: `granite-code:3b`
+3. **Benchmark Model**: Benchmark a specified AI model
+   - Model: Specify the AI model to benchmark
 
-4. **Convert Model**
-   - Converts models between different formats
-   - Parameters: Source model, Target model
-   - Example: `ollama://tinyllama` to `oci://example.com/model`
+4. **Get Info**: Display RamaLama configuration information
 
-5. **Get Info**
-   - Displays RamaLama configuration information
-   - No additional parameters required
+### RamaLama Service Setup
 
-6. **Chat with Model**
-   - Sends a chat message to a running model
-   - Parameters: Model name, Message, Port
-   - Note: The model must be served first
+The node expects a RamaLama service to be running. You can set this up using:
 
-### Configuration
+1. **Docker Compose** (recommended):
+   ```bash
+   # Use the provided docker-compose.ramalama.yml
+   docker-compose -f docker-compose.ramalama.yml up -d
+   ```
 
-- **RamaLama Container URL**: Default is `http://ramalama-service:8080`
-- **Model**: The AI model to use (e.g., `granite-code:3b`, `llama3.2`)
-- **Additional Arguments**: Optional command line arguments
-
-### Example Workflow
-
-1. Use "Get Info" to check RamaLama configuration
-2. Use "Serve Model" to start an AI model (e.g., `granite-code:3b`)
-3. Use "Chat with Model" to interact with the served model
-4. Use "List Containers" to see running models
-5. Use "Benchmark Model" to test model performance
-
-## Network Configuration
-
-Ensure both containers are on the same Docker network:
-
-```bash
-# Add your n8n container to the network if not already
-docker network connect n8n-network your-n8n-container
-```
+2. **Manual Setup**:
+   - Install RamaLama on your system
+   - Run the provided `ramalama-api.py` script
+   - Ensure it's accessible at the configured URL (default: `http://ramalama-service:8080`)
 
 ## Troubleshooting
 
-1. **Container Communication**: Ensure both containers are on the same network
-2. **API Endpoints**: Check if RamaLama API is accessible at `http://ramalama-service:8080/health`
-3. **Model Downloads**: First-time model serving will download models, which may take time
-4. **Permissions**: Ensure Docker socket permissions if using Docker-in-Docker
+### Node Not Appearing in n8n
 
-## API Endpoints
+1. Check that files are in the correct custom nodes directory
+2. Verify the build completed successfully (`dist` folder exists)
+3. Check n8n logs for any loading errors
+4. Ensure package.json has correct n8n configuration
 
-The RamaLama container exposes these endpoints:
+### Connection Issues
 
-- `GET /health` - Health check
-- `POST /execute` - Execute ramalama commands
-- `GET /info` - Get ramalama info
-- `GET /containers` - List containers
+1. Verify RamaLama service is running and accessible
+2. Check the Container URL parameter in the node configuration
+3. Ensure network connectivity between n8n and RamaLama service
+
+### Build Errors
+
+1. Ensure TypeScript is installed: `npm install -g typescript`
+2. Check that all dependencies are installed: `npm install`
+3. Verify TypeScript configuration in `tsconfig.json`
+
+## Development
+
+To modify the node:
+
+1. Edit the TypeScript files in the `nodes/` directory
+2. Run `npm run build` to compile changes
+3. Restart n8n to load updated code
+4. Use `npm run watch` for automatic compilation during development
+
+## Support
+
+The node is configured to work with:
+- n8n API version 1
+- TypeScript 4.2+
+- Node.js 16+
+
+For issues specific to RamaLama functionality, check the RamaLama documentation and ensure your service is properly configured.
