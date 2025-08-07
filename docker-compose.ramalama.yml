@@ -1,0 +1,27 @@
+version: '3.8'
+
+networks:
+  ai-starter-network:
+    external: 
+      name: self-hosted-ai-starter-kit_demo
+
+services:
+  ramalama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ramalama
+    container_name: ramalama-service
+    restart: unless-stopped
+    networks:
+      - ai-starter-network
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ramalama-data:/app/data
+    environment:
+      - RAMALAMA_HOST=0.0.0.0
+      - RAMALAMA_PORT=8080
+
+volumes:
+  ramalama-data:

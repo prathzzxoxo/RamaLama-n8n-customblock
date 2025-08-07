@@ -1,0 +1,25 @@
+{
+  "name": "ramalama-n8n-node",
+  "version": "1.0.0",
+  "description": "Custom n8n node for RamaLama AI model operations",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.0",
+    "n8n-workflow": "~0.128.0",
+    "typescript": "^4.2.0"
+  },
+  "dependencies": {
+    "axios": "^1.0.0"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [],
+    "nodes": [
+      "nodes/RamaLama/RamaLama.node.js"
+    ]
+  }
+}
